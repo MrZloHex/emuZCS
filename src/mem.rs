@@ -32,5 +32,12 @@ impl Mem {
     pub fn write(&mut self, address: usize, data: u8) {
         self.data[address] = data;
     }
+
+    pub fn dump(&self) {
+        for i in 0x80F0..0x8110 {
+            print!("{:>0w$X} ", self.data[i], w=2);
+        }
+        println!();
+    }
 }
 

@@ -28,6 +28,7 @@ fn main() {
             let hlt = cpu.execute(&rom, &mut ram);
             if manual {
                 cpu.dump();
+                ram.dump();
                 let mut input = String::new();
                 let _string = std::io::stdin().read_line(&mut input).ok().expect("Failed to read line");
                 let bytes = input.bytes().nth(0).expect("no byte read");
@@ -35,7 +36,7 @@ fn main() {
             }
             if hlt { break; }
         }   
-        if !manual { cpu.dump() } 
+        if !manual { cpu.dump(); ram.dump(); } 
     }
 
 
