@@ -132,7 +132,11 @@ impl Cpu {
                 let val = if !MemMov {
                     self.alu.temp
                 } else if MemMov && !MemDir {
-                    ram.read(self.registers.HL() as usize)
+                    if self.registers.HL() >= 0x8000 {
+                        ram.read(self.registers.HL() as usize)
+                    } else {
+                        rom.read(self.registers.HL() as usize)
+                    }
                 } else { 0 };
 
                 match self.decoder.get_register(true) {

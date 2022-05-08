@@ -21,6 +21,8 @@ fn main() {
         let mut cpu = cpu::Cpu::new();
 
         rom.load(read_file_bin(input_fname));
+    
+        ram.write(0xF001, 0b10011010);
 
         cpu.reset();
 
@@ -37,6 +39,9 @@ fn main() {
             if hlt { break; }
         }   
         if !manual { cpu.dump(); ram.dump(); } 
+        // for ad in 0x4F..0x54 {
+        //     println!("{:>0w$X} ", rom.read(ad), w=2);
+        // }
     }
 
 
