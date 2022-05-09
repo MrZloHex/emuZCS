@@ -34,7 +34,7 @@ impl Mem {
     }
 
     pub fn dump(&self) {
-        for i in 0x80F0..0x8110 {
+        for i in 0xF000..0xF006 {
             print!("{:>0w$X} ", self.data[i], w=2);
         }
         println!();
