@@ -22,12 +22,19 @@ fn main() {
 
         rom.load(read_file_bin(input_fname));
     
-        ram.write(0xF001, 0b10011010);
+        let input_seq = vec![0xD7, 0xE5, 0xEC, 0x8A, 0x00];
+        let mut input_index = 0;
+        ram.write(0xF001, input_seq[input_index]);
+        input_index += 1;
 
         cpu.reset();
 
         loop {
             let hlt = cpu.execute(&rom, &mut ram);
+            if (ram.read(0xF000) & 1) == 1 {
+                ram.write(0xF001, input_seq[input_index]);
+                input_index += 1;
+            }
             if manual {
                 cpu.dump();
                 ram.dump();

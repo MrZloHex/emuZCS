@@ -38,6 +38,10 @@ impl Mem {
             print!("{:>0w$X} ", self.data[i], w=2);
         }
         println!();
+        for i in 0x8300..0x830F {
+            print!("{:>0w$X} ", self.data[i], w=2);
+        }
+        println!();
     }
 }
 
