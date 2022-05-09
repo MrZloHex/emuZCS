@@ -359,7 +359,7 @@ impl Alu {
     }
 
     pub fn calculate(&mut self) -> u8 {
-        let val: i16 = match self.op {
+        let val: u8 = match self.op {
             Operation::ADD => self.accumulator as i16 + self.temp as i16,
             Operation::ADDC => {
                 let c: i16 = if self.flags.carry { 1 } else { 0 };
@@ -375,7 +375,7 @@ impl Alu {
             Operation::XOR => (self.accumulator ^ self.temp) as i16,
             Operation::NOT => (!self.temp) as i16,
             Operation::NOP => unreachable!("NOP")
-        };
+        } as u8;
         // println!("ALU: {}", val);
         self.flags.zero = val == 0;
         self.flags.parity = (val & 1) == 0;
