@@ -20,13 +20,15 @@ impl Cpu {
         self.alu.reset();
     }
 
-    pub fn execute(&mut self, rom: &Mem, ram: &mut Mem) -> bool {
+    pub fn execute(&mut self, rom: &Mem, ram: &mut Mem, manual: bool) -> bool {
         // First subcycle
         let opcode = rom.read(self.registers.program_counter as usize);
         self.decoder.load_opcode(opcode);
         self.registers.program_counter += 1;
-        println!("OPCODE: {:>0w$X}\tINSTR: {:?}", opcode, self.decoder.get_type(&mut self.alu), w=2);
-
+        if manual {
+            println!("OPCODE: {:>0w$X}\tINSTR: {:?}", opcode, self.decoder.get_type(&mut self.alu), w=2);
+        }
+        
         // Second subcycle
         match self.decoder.get_type(&mut self.alu) {
             InstrType::HLT => return true,
