@@ -8,8 +8,17 @@ use file::read_file_bin;
 mod screen;
 use screen::Screen;
 
+mod keyboard;
+use keyboard::Keyboard;
+
+use termios::{tcsetattr, Termios, TCSANOW, ECHO, ICANON, ISIG};
+
 
 fn main() {
+    let mut term = Termios::from_fd(0).unwrap();
+    term.c_lflag &= !(ECHO | ICANON);
+    tcsetattr(0, TCSANOW, &term).unwrap();
+
     let yaml = load_yaml!("cli.yaml");
     let matches = App::from(yaml).get_matches();
 
@@ -24,10 +33,12 @@ fn main() {
         let mut cpu = cpu::Cpu::new();
 
         let mut screen = Screen::new();
+        let mut keyboard = Keyboard::new();
 
         rom.load(read_file_bin(input_fname));
-    
+        
         cpu.reset();
+
 
         loop {
             let hlt = cpu.execute(&rom, &mut ram, manual);
@@ -39,7 +50,9 @@ fn main() {
                 let bytes = input.bytes().nth(0).expect("no byte read");
                 if bytes == 113 || bytes == 81 { break; }
             }
+            keyboard.update(&mut ram);
             screen.update(&ram);
+
             if hlt { break; }
         }   
         // if !manual { cpu.dump(); ram.dump(); } 
@@ -47,6 +60,9 @@ fn main() {
         //     println!("{:>0w$X} ", rom.read(ad), w=2);
         // }
     }
+
+    term.c_lflag |= ECHO | ICANON;
+    tcsetattr(0, TCSANOW, &term).unwrap();
 
 
 
