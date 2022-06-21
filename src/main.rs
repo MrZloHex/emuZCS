@@ -13,6 +13,7 @@ use keyboard::Keyboard;
 
 use termios::{tcsetattr, Termios, TCSANOW, ECHO, ICANON, ISIG};
 
+use std::io::Write;
 
 fn main() {
     let mut term = Termios::from_fd(0).unwrap();
@@ -56,8 +57,13 @@ fn main() {
             if hlt { break; }
         }   
         // if !manual { cpu.dump(); ram.dump(); } 
-        // for ad in 0x4F..0x54 {
-        //     println!("{:>0w$X} ", rom.read(ad), w=2);
+        
+        // print!("\x1B[2J");
+        // std::io::stdout().flush().unwrap();
+        // print!("\x1B[H");
+        // std::io::stdout().flush().unwrap();
+        // for ad in 0x8100..0x81FF {
+        //     print!("{:>0w$X} ", ram.read(ad), w=2);
         // }
     }
 

@@ -3,7 +3,7 @@ use std::io::{self, Write};
 use crate::mem::Mem;
 
 pub struct Screen {
-    screen: [[char; 40]; 25],
+    screen: [[char; 25]; 40],
     x_pos: u8,
     y_pos: u8,
     ch: char
@@ -16,7 +16,7 @@ impl Screen {
         print!("\x1B[H");
         io::stdout().flush().unwrap();
         let scr = Screen {
-            screen: [[' '; 40]; 25],
+            screen: [[' '; 25]; 40],
             x_pos: 0,
             y_pos: 0,
             ch: ' '
