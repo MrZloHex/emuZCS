@@ -3,7 +3,7 @@ use crate::mem::Mem;
 pub struct Cpu {
     registers: Registers,
     decoder: InstrDecoder,
-    alu: Alu
+    alu: Alu,
 }
 
 impl Cpu {
@@ -11,7 +11,7 @@ impl Cpu {
         Cpu {
             registers: Registers::new(),
             decoder: InstrDecoder::new(),
-            alu: Alu::new()
+            alu: Alu::new(),
         }
     }
 
@@ -26,9 +26,14 @@ impl Cpu {
         self.decoder.load_opcode(opcode);
         self.registers.program_counter += 1;
         if manual {
-            println!("OPCODE: {:>0w$X}\tINSTR: {:?}", opcode, self.decoder.get_type(&mut self.alu), w=2);
+            println!(
+                "OPCODE: {:>0w$X}\tINSTR: {:?}",
+                opcode,
+                self.decoder.get_type(&mut self.alu),
+                w = 2
+            );
         }
-        
+
         // Second subcycle
         match self.decoder.get_type(&mut self.alu) {
             InstrType::HLT => return true,
@@ -45,9 +50,9 @@ impl Cpu {
                 }
                 self.registers.program_counter += 1;
                 return false;
-            },
+            }
             InstrType::LSP => (),
-            InstrType::MOV {MemMov, MemDir} => {
+            InstrType::MOV { MemMov, MemDir } => {
                 let val = if !MemMov || (MemMov && MemDir) {
                     match self.decoder.get_register(false) {
                         Register::Accum => self.alu.accumulator,
@@ -58,7 +63,9 @@ impl Cpu {
                         Register::H => self.registers.reg_h,
                         Register::L => self.registers.reg_l,
                     }
-                } else { 0 };
+                } else {
+                    0
+                };
 
                 if !MemMov {
                     self.alu.temp = val;
@@ -66,62 +73,74 @@ impl Cpu {
                     ram.write(self.registers.HL() as usize, val);
                     return false;
                 }
-            },
-            InstrType::PUSH{Push} => {
+            }
+            InstrType::PUSH { Push } => {
                 if Push {
                     match self.decoder.get_register(false) {
-                        Register::Accum => ram.write(self.registers.stack_pointer as usize, self.alu.accumulator),
-                        Register::B => ram.write(self.registers.stack_pointer as usize, self.registers.reg_b),
-                        Register::C => ram.write(self.registers.stack_pointer as usize, self.registers.reg_c),
-                        Register::D => ram.write(self.registers.stack_pointer as usize, self.registers.reg_d),
-                        Register::E => ram.write(self.registers.stack_pointer as usize, self.registers.reg_e),
-                        Register::H => ram.write(self.registers.stack_pointer as usize, self.registers.reg_h),
-                        Register::L => ram.write(self.registers.stack_pointer as usize, self.registers.reg_l),
+                        Register::Accum => {
+                            ram.write(self.registers.stack_pointer as usize, self.alu.accumulator)
+                        }
+                        Register::B => {
+                            ram.write(self.registers.stack_pointer as usize, self.registers.reg_b)
+                        }
+                        Register::C => {
+                            ram.write(self.registers.stack_pointer as usize, self.registers.reg_c)
+                        }
+                        Register::D => {
+                            ram.write(self.registers.stack_pointer as usize, self.registers.reg_d)
+                        }
+                        Register::E => {
+                            ram.write(self.registers.stack_pointer as usize, self.registers.reg_e)
+                        }
+                        Register::H => {
+                            ram.write(self.registers.stack_pointer as usize, self.registers.reg_h)
+                        }
+                        Register::L => {
+                            ram.write(self.registers.stack_pointer as usize, self.registers.reg_l)
+                        }
                     }
                 } else {
                     self.registers.stack_pointer += 1;
                 }
-            },
+            }
             InstrType::LPC => {
                 self.registers.program_counter = self.registers.HL();
                 return false;
-            },
+            }
             InstrType::JS => {
                 let flag = match self.decoder.get_flag() {
                     Flag::Zero => self.alu.flags.zero,
                     Flag::Sign => self.alu.flags.sign,
                     Flag::Parity => self.alu.flags.parity,
-                    Flag::Carry => self.alu.flags.carry
+                    Flag::Carry => self.alu.flags.carry,
                 };
                 if flag {
                     self.registers.program_counter = self.registers.HL();
                 }
                 return false;
-            },
+            }
             InstrType::JR => {
                 let flag = match self.decoder.get_flag() {
                     Flag::Zero => self.alu.flags.zero,
                     Flag::Sign => self.alu.flags.sign,
                     Flag::Parity => self.alu.flags.parity,
-                    Flag::Carry => self.alu.flags.carry
+                    Flag::Carry => self.alu.flags.carry,
                 };
                 if !flag {
                     self.registers.program_counter = self.registers.HL();
                 }
                 return false;
+            }
+            InstrType::ALUOP { CMP } => match self.decoder.get_register(false) {
+                Register::Accum => self.alu.temp = self.alu.accumulator,
+                Register::B => self.alu.temp = self.registers.reg_b,
+                Register::C => self.alu.temp = self.registers.reg_c,
+                Register::D => self.alu.temp = self.registers.reg_d,
+                Register::E => self.alu.temp = self.registers.reg_e,
+                Register::H => self.alu.temp = self.registers.reg_h,
+                Register::L => self.alu.temp = self.registers.reg_l,
             },
-            InstrType::ALUOP{CMP} => {
-                match self.decoder.get_register(false) {
-                    Register::Accum => self.alu.temp = self.alu.accumulator,
-                    Register::B => self.alu.temp = self.registers.reg_b,
-                    Register::C => self.alu.temp = self.registers.reg_c,
-                    Register::D => self.alu.temp = self.registers.reg_d,
-                    Register::E => self.alu.temp = self.registers.reg_e,
-                    Register::H => self.alu.temp = self.registers.reg_h,
-                    Register::L => self.alu.temp = self.registers.reg_l,
-                }
-            },
-            _ => std::process::exit(12)
+            _ => std::process::exit(12),
         }
 
         // Third subcycle
@@ -129,8 +148,8 @@ impl Cpu {
             InstrType::LSP => {
                 self.registers.stack_pointer = self.registers.HL();
                 return false;
-            },
-            InstrType::MOV {MemMov, MemDir} => {
+            }
+            InstrType::MOV { MemMov, MemDir } => {
                 let val = if !MemMov {
                     self.alu.temp
                 } else if MemMov && !MemDir {
@@ -139,7 +158,9 @@ impl Cpu {
                     } else {
                         rom.read(self.registers.HL() as usize)
                     }
-                } else { 0 };
+                } else {
+                    0
+                };
 
                 match self.decoder.get_register(true) {
                     Register::Accum => self.alu.accumulator = val,
@@ -151,32 +172,46 @@ impl Cpu {
                     Register::L => self.registers.reg_l = val,
                 }
                 return false;
-            },
-            InstrType::PUSH{Push} => {
+            }
+            InstrType::PUSH { Push } => {
                 if Push {
                     self.registers.stack_pointer -= 1;
                 } else {
                     match self.decoder.get_register(true) {
-                        Register::Accum => self.alu.accumulator = ram.read(self.registers.stack_pointer as usize),
-                        Register::B => self.registers.reg_b = ram.read(self.registers.stack_pointer as usize),
-                        Register::C => self.registers.reg_c = ram.read(self.registers.stack_pointer as usize),
-                        Register::D => self.registers.reg_d = ram.read(self.registers.stack_pointer as usize),
-                        Register::E => self.registers.reg_e = ram.read(self.registers.stack_pointer as usize),
-                        Register::H => self.registers.reg_h = ram.read(self.registers.stack_pointer as usize),
-                        Register::L => self.registers.reg_l = ram.read(self.registers.stack_pointer as usize),
+                        Register::Accum => {
+                            self.alu.accumulator = ram.read(self.registers.stack_pointer as usize)
+                        }
+                        Register::B => {
+                            self.registers.reg_b = ram.read(self.registers.stack_pointer as usize)
+                        }
+                        Register::C => {
+                            self.registers.reg_c = ram.read(self.registers.stack_pointer as usize)
+                        }
+                        Register::D => {
+                            self.registers.reg_d = ram.read(self.registers.stack_pointer as usize)
+                        }
+                        Register::E => {
+                            self.registers.reg_e = ram.read(self.registers.stack_pointer as usize)
+                        }
+                        Register::H => {
+                            self.registers.reg_h = ram.read(self.registers.stack_pointer as usize)
+                        }
+                        Register::L => {
+                            self.registers.reg_l = ram.read(self.registers.stack_pointer as usize)
+                        }
                     }
                 }
                 return false;
-            },
-            InstrType::ALUOP{CMP} => {
+            }
+            InstrType::ALUOP { CMP } => {
                 if CMP {
                     self.alu.calculate();
                 } else {
                     self.alu.accumulator = self.alu.calculate();
                 }
                 return false;
-            },
-            _ => std::process::exit(13)
+            }
+            _ => std::process::exit(13),
         }
         unreachable!();
         true
@@ -184,14 +219,39 @@ impl Cpu {
 
     pub fn dump(&self) {
         println!("CPU DUMP:\nRegisters:\tFlags:");
-        println!("A  {:>0w$X}\t\tZ  {}", self.alu.accumulator, self.alu.flags.zero, w=2);
-        println!("B  {:>0w$X}\t\tS  {}", self.registers.reg_b, self.alu.flags.sign, w=2);
-        println!("C  {:>0w$X}\t\tP  {}", self.registers.reg_c, self.alu.flags.parity, w=2);
-        println!("D  {:>0w$X}\t\tC  {}", self.registers.reg_d, self.alu.flags.carry, w=2);
-        println!("E  {:>0w$X}", self.registers.reg_e, w=2);
-        println!("HL {:>0w$X}{:>0w$X}", self.registers.reg_h, self.registers.reg_l, w=2);
-        println!("SP {:>0w$X}", self.registers.stack_pointer, w=4);
-        println!("PC {:>0w$X}", self.registers.program_counter, w=4);
+        println!(
+            "A  {:>0w$X}\t\tZ  {}",
+            self.alu.accumulator,
+            self.alu.flags.zero,
+            w = 2
+        );
+        println!(
+            "B  {:>0w$X}\t\tS  {}",
+            self.registers.reg_b,
+            self.alu.flags.sign,
+            w = 2
+        );
+        println!(
+            "C  {:>0w$X}\t\tP  {}",
+            self.registers.reg_c,
+            self.alu.flags.parity,
+            w = 2
+        );
+        println!(
+            "D  {:>0w$X}\t\tC  {}",
+            self.registers.reg_d,
+            self.alu.flags.carry,
+            w = 2
+        );
+        println!("E  {:>0w$X}", self.registers.reg_e, w = 2);
+        println!(
+            "HL {:>0w$X}{:>0w$X}",
+            self.registers.reg_h,
+            self.registers.reg_l,
+            w = 2
+        );
+        println!("SP {:>0w$X}", self.registers.stack_pointer, w = 4);
+        println!("PC {:>0w$X}", self.registers.program_counter, w = 4);
     }
 }
 
@@ -205,7 +265,7 @@ enum InstrType {
     JS,
     JR,
     ALUOP { CMP: bool },
-    HLT
+    HLT,
 }
 
 enum Register {
@@ -215,14 +275,14 @@ enum Register {
     D,
     E,
     H,
-    L
+    L,
 }
 
 enum Flag {
     Zero,
     Sign,
     Parity,
-    Carry
+    Carry,
 }
 
 struct InstrDecoder {
@@ -232,9 +292,7 @@ struct InstrDecoder {
 
 impl InstrDecoder {
     pub fn new() -> InstrDecoder {
-        InstrDecoder {
-            reg_instruction: 0
-        }
+        InstrDecoder { reg_instruction: 0 }
     }
 
     pub fn load_opcode(&mut self, opcode: u8) {
@@ -247,9 +305,24 @@ impl InstrDecoder {
             0x3F => InstrType::LSP,
             0x24 => InstrType::LPC,
             0x00..=0x06 => InstrType::MIV,
-            0x40..=0x46 | 0x48..=0x4E | 0x50..=0x56 | 0x58..=0x5E | 0x60..=0x66 | 0x68..=0x6E | 0x70..=0x76 => InstrType::MOV{MemMov: false, MemDir:false},
-            0x47 | 0x4F | 0x57 | 0x5F | 0x67 | 0x6F | 0x77 => InstrType::MOV {MemMov: true, MemDir: true},
-            0x78 | 0x79 | 0x7A | 0x7B | 0x7C | 0x7D | 0x7E => InstrType::MOV {MemMov: true, MemDir: false},
+            0x40..=0x46
+            | 0x48..=0x4E
+            | 0x50..=0x56
+            | 0x58..=0x5E
+            | 0x60..=0x66
+            | 0x68..=0x6E
+            | 0x70..=0x76 => InstrType::MOV {
+                MemMov: false,
+                MemDir: false,
+            },
+            0x47 | 0x4F | 0x57 | 0x5F | 0x67 | 0x6F | 0x77 => InstrType::MOV {
+                MemMov: true,
+                MemDir: true,
+            },
+            0x78 | 0x79 | 0x7A | 0x7B | 0x7C | 0x7D | 0x7E => InstrType::MOV {
+                MemMov: true,
+                MemDir: false,
+            },
             0x07 | 0x0F | 0x17 | 0x1F | 0x27 | 0x2f | 0x37 => InstrType::PUSH { Push: true },
             0x38 | 0x39 | 0x3A | 0x3B | 0x3C | 0x3D | 0x3E => InstrType::PUSH { Push: false },
             0xCC | 0xDC | 0xEC | 0xFC => InstrType::JS,
@@ -262,23 +335,24 @@ impl InstrDecoder {
                         Register::C => alu.set_op(Operation::SUB),
                         Register::D => alu.set_op(Operation::SUBB),
                         Register::E => alu.set_op(Operation::SUB),
-                        _ => unreachable!()
+                        _ => unreachable!(),
                     }
                     let cmp = (self.reg_instruction & 0x7) == 4;
                     InstrType::ALUOP { CMP: cmp }
-                } else if (self.reg_instruction & 0xC0 == 0xC0) && (self.reg_instruction & 0x7 != 4){
+                } else if (self.reg_instruction & 0xC0 == 0xC0) && (self.reg_instruction & 0x7 != 4)
+                {
                     match self.get_register(true) {
                         Register::Accum => alu.set_op(Operation::AND),
                         Register::B => alu.set_op(Operation::OR),
                         Register::C => alu.set_op(Operation::XOR),
                         Register::D => alu.set_op(Operation::NOT),
-                        _ => unreachable!()
+                        _ => unreachable!(),
                     }
                     InstrType::ALUOP { CMP: false }
                 } else {
                     unreachable!()
                 }
-            },
+            }
         }
     }
 
@@ -296,7 +370,7 @@ impl InstrDecoder {
             4 => Register::E,
             5 => Register::H,
             6 => Register::L,
-            _ => std::process::exit(1)
+            _ => std::process::exit(1),
         }
     }
 
@@ -307,7 +381,7 @@ impl InstrDecoder {
             1 => Flag::Sign,
             2 => Flag::Parity,
             3 => Flag::Carry,
-            _ => std::process::exit(1)
+            _ => std::process::exit(1),
         }
     }
 }
@@ -321,14 +395,14 @@ enum Operation {
     OR,
     XOR,
     NOT,
-    NOP
+    NOP,
 }
 
 struct Alu {
     pub accumulator: u8,
     pub temp: u8,
     pub flags: Flags,
-    op: Operation
+    op: Operation,
 }
 
 impl Alu {
@@ -340,9 +414,9 @@ impl Alu {
                 zero: false,
                 carry: false,
                 sign: false,
-                parity: false
+                parity: false,
             },
-            op: Operation::NOP
+            op: Operation::NOP,
         }
     }
 
@@ -361,23 +435,23 @@ impl Alu {
     }
 
     pub fn calculate(&mut self) -> u8 {
-        let val: u8 = match self.op {
+        let val = match self.op {
             Operation::ADD => self.accumulator as i16 + self.temp as i16,
             Operation::ADDC => {
                 let c: i16 = if self.flags.carry { 1 } else { 0 };
                 self.accumulator as i16 + self.temp as i16 + c
-            },
+            }
             Operation::SUB => self.accumulator as i16 - self.temp as i16,
             Operation::SUBB => {
                 let c: i16 = if self.flags.carry { 1 } else { 0 };
                 self.accumulator as i16 - self.temp as i16 - c
-            },
+            }
             Operation::AND => (self.accumulator & self.temp) as i16,
             Operation::OR => (self.accumulator | self.temp) as i16,
             Operation::XOR => (self.accumulator ^ self.temp) as i16,
             Operation::NOT => (!self.temp) as i16,
-            Operation::NOP => unreachable!("NOP")
-        } as u8;
+            Operation::NOP => unreachable!("NOP"),
+        };
         // println!("ALU: {}", val);
         self.flags.zero = val == 0;
         self.flags.parity = (val & 1) == 0;
@@ -391,7 +465,7 @@ struct Flags {
     pub zero: bool,
     pub carry: bool,
     pub sign: bool,
-    pub parity: bool
+    pub parity: bool,
 }
 
 struct Registers {
@@ -403,7 +477,7 @@ struct Registers {
     pub reg_l: u8,
 
     pub stack_pointer: u16,
-    pub program_counter: u16
+    pub program_counter: u16,
 }
 
 impl Registers {
@@ -417,7 +491,7 @@ impl Registers {
             reg_l: 0,
 
             stack_pointer: 0,
-            program_counter: 0
+            program_counter: 0,
         }
     }
 
@@ -433,6 +507,6 @@ impl Registers {
     }
 
     pub fn HL(&self) -> u16 {
-        (self.reg_h as u16 * 0x100) + self.reg_l as u16 
+        (self.reg_h as u16 * 0x100) + self.reg_l as u16
     }
 }

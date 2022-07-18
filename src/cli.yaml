@@ -1,29 +1,30 @@
 name: emuZCS
-version: "0.1.0"
+version: "0.7.9"
 author: MrZloHex <zlo.alex.it@gmail.com>
 about: Emulator of ZCS-8 system
-subcommands:
-    - run:
-        about: Run emulator
-        version: "0.1"
-        author: MrZloHex <zlo.alex.it@gmail.com>
-        args:
-            - rom:
-                short: r
-                long: rom 
-                help: Binary file which would be load to ROM
-                required: true
-                takes_value: true
-                value_name: ROM_FILE
-            - verbose:
-                short: v
-                long: verbose
-                help: Verbose output
-                required: false
-                takes_value: false
-            - manual:
-                short: m
-                long: manual
-                help: Manual control of CPU cycles
-                required: false
-                takes_value: false
+args:
+    - rom:
+        short: r
+        long: rom 
+        help: Binary file which would be load to ROM
+        required: true
+        takes_value: true
+        value_name: ROM_FILE
+    - verbose:
+        short: v
+        long: verbose
+        help: Verbose output
+        required: false
+        takes_value: false
+    - manual:
+        short: m
+        long: manual
+        help: Manual control of CPU cycles
+        required: false
+        takes_value: false
+    - cpu-only:
+        short: c
+        long: cpu-only
+        help: Emulate only CPU without rendering monitor and keyboard
+        required: false
+        takes_value: false

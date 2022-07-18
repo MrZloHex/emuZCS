@@ -29,10 +29,15 @@ impl Keyboard {
         let ctrl = ram.read(0xF000);
         if ctrl & ENABLE == ENABLE {
             for key in self.astdin.by_ref().keys() {
-                // println!("You have hit: {:?}", key.unwrap());
+                // println!("You have hit: {:?}", key.as_ref().unwrap());
                 match key.unwrap() {
                     Key::Char(c) => self.buf.push_back(c),
-                    _ => panic!()
+                    Key::Ctrl(c) => {
+                        if c == 'h' {
+                            self.buf.push_back(8 as char);
+                        }
+                    },
+                    _ => panic!("WRITE KERNEL IN HASKELL {:?}", "WEQ")
                 }
             }
             if ctrl & CLEAR == CLEAR {
